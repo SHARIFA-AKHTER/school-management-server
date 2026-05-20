@@ -23,9 +23,19 @@ const getAllPayments = async()=>{
     return result;
 }
 
+const getPaymentsByStudent = async(studentId: string)=>{
+    const result = await prisma.payment.findMany({
+        where: { studentId},
+        orderBy: { paymentDate: 'desc'},
+
+    })
+    return result;
+}
 
 
 export const PaymentService ={
     createPayment,
-    getAllPayments
+    getAllPayments,
+    getPaymentsByStudent
 }
+
