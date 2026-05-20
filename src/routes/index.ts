@@ -37,7 +37,7 @@ const moduleRoutes = [
     route: AttendanceRoutes,
   },
 
-  {
+  { 
     path: "/results",
     route: ResultRoutes,
   },
