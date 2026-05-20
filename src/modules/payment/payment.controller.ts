@@ -20,7 +20,19 @@ const getAllPayments = catchAsync(async(req: Request, res: Response)=>{
     })
 })
 
+const getStudentPayments = catchAsync(async(req: Request, res: Response)=>{
+    const studentId = req.params.studentId as string;
+
+    const result = await PaymentService.getPaymentsByStudent(studentId)
+    res.status(200).json({
+        success: true,
+        message: 'Student payments fetched successfully',
+        data: result,
+    })
+})
+
 export const PaymentController = {
     createPayment,
     getAllPayments,
+    getStudentPayments
 }
