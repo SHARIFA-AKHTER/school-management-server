@@ -7,6 +7,7 @@ import { SubjectRoutes } from "../modules/subject/subject.route.js";
 import { AttendanceRoutes } from "../modules/attendance/attendance.route.js";
 import { ResultRoutes } from "../modules/result/result.route.js";
 import { ExamRoutes } from "../modules/exam/exam.route.js";
+import { PaymentRoutes } from "../modules/payment/payment.route.js";
 
 const router = Router();
 
@@ -44,6 +45,11 @@ const moduleRoutes = [
   {
     path: "/exams",
     route: ExamRoutes,
+  },
+  
+  {
+    path: "/payments",
+    route: PaymentRoutes,
   }
 ];
 
