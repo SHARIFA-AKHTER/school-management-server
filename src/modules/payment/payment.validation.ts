@@ -6,14 +6,14 @@ const createPaymentZodSchema = z.object({
       .number()
       .positive('Amount must be greater than 0'),
 
-    status: z
-      .enum(['PENDING', 'PAID', 'FAILED'])
-      .default('PENDING'),
+    // status: z
+    //   .enum(['PENDING', 'PAID', 'FAILED'])
+    //   .default('PENDING'),
 
-    transactionId: z
-      .string()
-      .trim()
-      .min(1, 'Transaction ID is required'),
+    // transactionId: z
+    //   .string()
+    //   .trim()
+    //   .min(1, 'Transaction ID is required'),
 
     purpose: z
       .string()
