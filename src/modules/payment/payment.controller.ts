@@ -1,8 +1,8 @@
+
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Request, Response } from "express";
 import catchAsync from "../../utils/catchAsync.js";
 import { PaymentService } from "./payment.service.js";
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { prisma } from "../../lib/prisma.js";
 import SSLCommerzPayment from "sslcommerz-lts";
 import crypto from "crypto";
@@ -13,74 +13,90 @@ const store_passwd = process.env.STORE_PASSWORD || "testbox@ssl";
 const is_live = process.env.IS_LIVE === "true";
 
 // ১. SSLCommerz Payment Session Initialization
-const initiateSSLCommerzPayment = catchAsync(
-  async (req: Request, res: Response) => {
-    const { amount, purpose, studentId } = req.body.body;
+const initiateSSLCommerzPayment = catchAsync(async (req: Request, res: Response) => {
+  const { amount, purpose, studentId } = req.body;
 
-    const student = await prisma.student.findUnique({
-      where: { id: studentId },
-    });
+  const student = await prisma.student.findUnique({
+    where: { id: studentId },
+  });
 
-    if (!student) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Student structure not found" });
+  if (!student) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Student structure not found" });
+  }
+
+  const transactionId = `TXN-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  const backend = process.env.BACKEND_URL || "http://localhost:5000";
+
+  // SSLCommerz 
+  const paymentData = {
+    total_amount: Number(amount),
+    currency: "BDT",
+    tran_id: transactionId,
+    success_url: `${backend}/api/payments/success/${transactionId}`,
+    fail_url: `${backend}/api/payments/fail/${transactionId}`,
+    cancel_url: `${backend}/api/payments/cancel/${transactionId}`,
+    ipn_url: `${backend}/api/payments/ipn`,
+    shipping_method: "No",
+    product_name: purpose || "School Fee",
+    product_category: "Education",
+    product_profile: "non-physical-goods",
+    cus_name: student.name || "Student User",
+    cus_email: "student@schoolpro.com",
+    cus_add1: "Dhaka",
+    cus_city: "Dhaka",
+    cus_country: "Bangladesh",
+    cus_phone: "01700000000",
+    ship_name: "N/A",
+    ship_add1: "N/A",
+    ship_city: "N/A",
+    ship_country: "N/A",
+  };
+
+  await prisma.payment.create({
+    data: {
+      amount: Number(amount),
+      status: "PENDING",
+      transactionId,
+      purpose,
+      studentId,
+    },
+  });
+
+  console.log("SSL Credentials Check:", store_id, store_passwd, is_live);
+
+  const SSLCZ = (SSLCommerzPayment as any).default || SSLCommerzPayment;
+  const sslcz = new SSLCZ(store_id, store_passwd, is_live);
+
+  try {
+
+    const apiResponse = await sslcz.init(paymentData);
+
+    if (apiResponse?.GatewayPageURL) {
+      return res.status(200).json({
+        success: true,
+        url: apiResponse.GatewayPageURL,
+      });
+    } else {
+      console.log("❌ SSLCommerz Gate Rejected:", apiResponse);
+      return res.status(400).json({
+        success: false,
+        message: "Failed to generate SSLCommerz gateway URL token",
+        details: apiResponse?.failedreason || apiResponse,
+      });
     }
-
-    const transactionId = `TXN-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
-
-    const paymentData = {
-      total_amount: Number(amount),
-      currency: "BDT",
-      tran_id: transactionId,
-      success_url: `${process.env.BACKEND_URL}/api/payments/success/${transactionId}`,
-      fail_url: `${process.env.BACKEND_URL}/api/payments/fail/${transactionId}`,
-      cancel_url: `${process.env.BACKEND_URL}/api/payments/cancel/${transactionId}`,
-      ipn_url: `${process.env.BACKEND_URL}/api/payments/ipn`,
-      shipping_method: "No",
-      product_name: purpose,
-      product_category: "Education",
-      product_profile: "non-physical-goods",
-      cus_name: student.name || "Student User",
-      cus_email: "student@schoolpro.com",
-      cus_add1: "Dhaka",
-      cus_city: "Dhaka",
-      cus_country: "Bangladesh",
-      cus_phone: "01700000000",
-      ship_name: "N/A",
-      ship_add1: "N/A",
-      ship_city: "N/A",
-      ship_country: "N/A",
-    };
-
-    await prisma.payment.create({
-      data: {
-        amount: Number(amount),
-        status: "PENDING",
-        transactionId,
-        purpose,
-        studentId,
-      },
+  } catch (sslError: any) {
+    console.error("💥 Core SSLCommerz Integration Crash:", sslError);
+    return res.status(500).json({
+      success: false,
+      message: "Internal gateway engine connectivity failure",
+      error: sslError?.message || sslError,
     });
+  }
+});
 
-    const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
-    sslcz.init(paymentData).then((apiResponse: any) => {
-      if (apiResponse?.GatewayPageURL) {
-        res.status(200).json({
-          success: true,
-          url: apiResponse.GatewayPageURL,
-        });
-      } else {
-        res.status(400).json({
-          success: false,
-          message: "Failed to generate SSLCommerz gateway URL token",
-        });
-      }
-    });
-  },
-);
 const paymentSuccess = catchAsync(async (req: Request, res: Response) => {
-
   const tranId = (req.body?.tran_id || req.params.tranId) as string;
 
   if (!tranId) {
@@ -92,11 +108,11 @@ const paymentSuccess = catchAsync(async (req: Request, res: Response) => {
     data: { status: "PAID" },
   });
 
-  res.redirect(`${process.env.FRONTEND_URL}/payments?status=success&trx=${tranId}`);
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  res.redirect(`${frontendUrl}/payments?status=success&trx=${tranId}`);
 });
 
 const paymentFail = catchAsync(async (req: Request, res: Response) => {
-
   const tranId = (req.body?.tran_id || req.params.tranId) as string;
 
   if (!tranId) {
@@ -104,11 +120,12 @@ const paymentFail = catchAsync(async (req: Request, res: Response) => {
   }
 
   await prisma.payment.update({
-    where: { transactionId: tranId }, 
+    where: { transactionId: tranId },
     data: { status: "FAILED" },
   });
 
-  res.redirect(`${process.env.FRONTEND_URL}/payments?status=failed`);
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+  res.redirect(`${frontendUrl}/payments?status=failed`);
 });
 
 const createPayment = catchAsync(async (req: Request, res: Response) => {
