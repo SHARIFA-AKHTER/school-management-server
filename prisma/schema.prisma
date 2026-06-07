@@ -23,16 +23,15 @@ model User {
 }
 
 model Student {
-  id          String       @id @default(uuid())
+  id          String         @id @default(uuid())
   name        String
   classId     String
   userId      String?
-  class       Class        @relation(fields: [classId], references: [id])
+  class       Class          @relation(fields: [classId], references: [id])
   attendances Attendance[]
   results     Result[]
   payments    Payment[]
   performance PerformanceAI?
-
 }
 
 model Teacher {
@@ -45,6 +44,7 @@ model Class {
   name     String
   students Student[]
   subjects Subject[]
+  exams    Exam[]
 }
 
 model Subject {
@@ -52,6 +52,7 @@ model Subject {
   name    String
   classId String
   class   Class  @relation(fields: [classId], references: [id])
+  results Result[]
 }
 
 model Attendance {
@@ -66,7 +67,8 @@ model Result {
   id        String  @id @default(uuid())
   studentId String
   student   Student @relation(fields: [studentId], references: [id])
-  subject   String
+  subjectId String
+  subject   Subject @relation(fields: [subjectId], references: [id])
   marks     Int
   exam      Exam?   @relation(fields: [examId], references: [id])
   examId    String?
@@ -81,6 +83,9 @@ model Payment {
   studentId     String
   student       Student  @relation(fields: [studentId], references: [id])
   paymentDate   DateTime @default(now())
+
+  examId        String?
+  exam          Exam?    @relation(fields: [examId], references: [id])
 }
 
 model Exam {
@@ -89,15 +94,18 @@ model Exam {
   examDate  DateTime
   feeAmount Float    @default(0.0)
   results   Result[]
+  payments  Payment[]
+  classId   String?
+  class     Class?   @relation(fields: [classId], references: [id])
 }
 
 model PerformanceAI {
-  id          String   @id @default(uuid())
-  studentId   String   @unique
-  student     Student  @relation(fields: [studentId], references: [id])
-  insightText String  
+  id             String   @id @default(uuid())
+  studentId      String   @unique
+  student        Student  @relation(fields: [studentId], references: [id])
+  insightText    String
   predictedGrade String?
-  updatedAt   DateTime @updatedAt
+  updatedAt      DateTime @updatedAt
 }
 
 model Notification {
@@ -108,7 +116,6 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
 }
-
 
 enum Role {
   ADMIN
