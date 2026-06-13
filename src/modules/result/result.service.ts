@@ -1,12 +1,18 @@
 import { prisma } from "../../lib/prisma.js";
 import { IResult } from "./result.interface.js";
 
-
 const createResult = async (data: IResult) => {
   const result = await prisma.result.create({
-    data,
+    data: {
+      studentId: data.studentId,
+      subjectId: data.subjectId ?? '', 
+      marks: Number(data.marks),
+      examId: data.examId || null,
+    },
     include: {
       student: true,
+      subject: true,
+      exam: true,
     },
   });
   return result;

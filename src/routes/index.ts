@@ -50,7 +50,11 @@ const moduleRoutes = [
   {
     path: "/payments",
     route: PaymentRoutes,
-  }
+  },
+  {
+    path: "/email",
+    route: EmailRoutes,
+  },
 ];
 
 moduleRoutes.forEach((route) => router.use(route.path, route.route));

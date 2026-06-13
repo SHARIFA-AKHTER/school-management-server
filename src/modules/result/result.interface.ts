@@ -1,5 +1,8 @@
 export interface IResult {
+  id?: string;
   studentId: string;
-  subject: string;
+  subjectId: string;
+  subject?: string;
   marks: number;
+  examId?: string | null;
 }

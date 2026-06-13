@@ -1,11 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
-  //  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -27,11 +21,11 @@ model Student {
   name        String
   classId     String
   userId      String?
-  class       Class          @relation(fields: [classId], references: [id])
   attendances Attendance[]
-  results     Result[]
   payments    Payment[]
   performance PerformanceAI?
+  results     Result[]
+  class       Class          @relation(fields: [classId], references: [id])
 }
 
 model Teacher {
@@ -42,17 +36,17 @@ model Teacher {
 model Class {
   id       String    @id @default(uuid())
   name     String
+  exams    Exam[]
   students Student[]
   subjects Subject[]
-  exams    Exam[]
 }
 
 model Subject {
-  id      String @id @default(cuid())
+  id      String   @id @default(cuid())
   name    String
   classId String
-  class   Class  @relation(fields: [classId], references: [id])
   results Result[]
+  class   Class    @relation(fields: [classId], references: [id])
 }
 
 model Attendance {
@@ -66,12 +60,12 @@ model Attendance {
 model Result {
   id        String  @id @default(uuid())
   studentId String
-  student   Student @relation(fields: [studentId], references: [id])
   subjectId String
-  subject   Subject @relation(fields: [subjectId], references: [id])
   marks     Int
-  exam      Exam?   @relation(fields: [examId], references: [id])
   examId    String?
+  exam      Exam?   @relation(fields: [examId], references: [id])
+  student   Student @relation(fields: [studentId], references: [id])
+  subject   Subject @relation(fields: [subjectId], references: [id])
 }
 
 model Payment {
@@ -81,31 +75,30 @@ model Payment {
   transactionId String   @unique
   purpose       String
   studentId     String
-  student       Student  @relation(fields: [studentId], references: [id])
   paymentDate   DateTime @default(now())
-
   examId        String?
   exam          Exam?    @relation(fields: [examId], references: [id])
+  student       Student  @relation(fields: [studentId], references: [id])
 }
 
 model Exam {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
   examDate  DateTime
-  feeAmount Float    @default(0.0)
-  results   Result[]
-  payments  Payment[]
+  feeAmount Float     @default(0.0)
   classId   String?
-  class     Class?   @relation(fields: [classId], references: [id])
+  class     Class?    @relation(fields: [classId], references: [id])
+  payments  Payment[]
+  results   Result[]
 }
 
 model PerformanceAI {
   id             String   @id @default(uuid())
   studentId      String   @unique
-  student        Student  @relation(fields: [studentId], references: [id])
   insightText    String
   predictedGrade String?
   updatedAt      DateTime @updatedAt
+  student        Student  @relation(fields: [studentId], references: [id])
 }
 
 model Notification {
