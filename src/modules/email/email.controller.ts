@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import catchAsync from '../../utils/catchAsync.js';
+import { EmailService } from './email.service.js';
 
 
 const triggerInvoiceEmail = catchAsync(async (req: Request, res: Response) => {

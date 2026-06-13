@@ -8,6 +8,7 @@ import { AttendanceRoutes } from "../modules/attendance/attendance.route.js";
 import { ResultRoutes } from "../modules/result/result.route.js";
 import { ExamRoutes } from "../modules/exam/exam.route.js";
 import { PaymentRoutes } from "../modules/payment/payment.route.js";
+import { EmailRoutes } from "../modules/email/email.route.js";
 
 const router = Router();
 

@@ -1,14 +1,14 @@
-export interface IPaymentInvoiceData {
-  transactionId: string;
-  amount: number;
-  purpose: string;
-  studentId: string;
-  studentName: string;
-  paymentDate?: Date;
-}
+import express from 'express';
+import { EmailController } from './email.controller.js';
+import { EmailValidation } from './email.validation.js';
+import { validateRequest } from '../../middlewares/validate.middleware.js';
 
-export interface ISendEmailInput {
-  to: string;
-  subject: string;
-  paymentData: IPaymentInvoiceData;
-}
+const router = express.Router();
+
+router.post(
+  '/send-invoice',
+  validateRequest(EmailValidation.sendInvoiceEmailZodSchema),
+  EmailController.triggerInvoiceEmail
+);
+
+export const EmailRoutes = router;
