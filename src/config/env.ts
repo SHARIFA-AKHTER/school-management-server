@@ -12,4 +12,7 @@ export const env = {
   bcrypt_salt_rounds: process.env.BCRYPT_SALT_ROUNDS || 12,
   google_client_id: process.env.GOOGLE_CLIENT_ID,
   google_client_secret: process.env.GOOGLE_CLIENT_SECRET,
+
+  email_user: process.env.EMAIL_USER,
+  email_pass: process.env.EMAIL_PASS,
 };
