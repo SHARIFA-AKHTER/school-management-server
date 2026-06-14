@@ -7,6 +7,8 @@ import { prisma } from "../../lib/prisma.js";
 import SSLCommerzPayment from "sslcommerz-lts";
 import crypto from "crypto";
 
+import { EmailService } from "../email/email.service.js"; 
+
 // SSLCommerz Credentials Configuration
 const store_id = process.env.STORE_ID || "testbox";
 const store_passwd = process.env.STORE_PASSWORD || "testbox@ssl";
@@ -26,10 +28,21 @@ const initiateSSLCommerzPayment = catchAsync(async (req: Request, res: Response)
       .json({ success: false, message: "Student structure not found" });
   }
 
+  let studentEmail = "student@schoolpro.com"; 
+
+  if (student.userId) {
+    const userAccount = await prisma.user.findUnique({
+      where: { id: student.userId },
+    });
+    if (userAccount?.email) {
+      studentEmail = userAccount.email;
+    }
+  }
+
   const transactionId = `TXN-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
   const backend = process.env.BACKEND_URL || "http://localhost:5000";
 
-  // SSLCommerz 
+  // SSLCommerz Data Layout
   const paymentData = {
     total_amount: Number(amount),
     currency: "BDT",
@@ -43,7 +56,7 @@ const initiateSSLCommerzPayment = catchAsync(async (req: Request, res: Response)
     product_category: "Education",
     product_profile: "non-physical-goods",
     cus_name: student.name || "Student User",
-    cus_email: "student@schoolpro.com",
+    cus_email: studentEmail, 
     cus_add1: "Dhaka",
     cus_city: "Dhaka",
     cus_country: "Bangladesh",
@@ -70,7 +83,6 @@ const initiateSSLCommerzPayment = catchAsync(async (req: Request, res: Response)
   const sslcz = new SSLCZ(store_id, store_passwd, is_live);
 
   try {
-
     const apiResponse = await sslcz.init(paymentData);
 
     if (apiResponse?.GatewayPageURL) {
@@ -103,10 +115,47 @@ const paymentSuccess = catchAsync(async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: "Transaction ID parameter is missing" });
   }
 
-  await prisma.payment.update({
+
+  const updatedPayment = await prisma.payment.update({
     where: { transactionId: tranId },
     data: { status: "PAID" },
   });
+
+  if (updatedPayment) {
+    const studentData = await prisma.student.findUnique({
+      where: { id: updatedPayment.studentId },
+    });
+
+    if (studentData) {
+      let recipientEmail = "student@schoolpro.com"; 
+
+      if (studentData.userId) {
+        const userAccount = await prisma.user.findUnique({
+          where: { id: studentData.userId },
+        });
+        if (userAccount?.email) {
+          recipientEmail = userAccount.email;
+        }
+      }
+
+      EmailService.sendInvoiceWithPDF({
+        to: recipientEmail,
+        subject: `💳 Payment Receipt Verified - Txn: ${updatedPayment.transactionId}`,
+        paymentData: {
+          transactionId: updatedPayment.transactionId,
+          paymentDate: updatedPayment.paymentDate,
+          studentName: studentData.name,
+          studentId: updatedPayment.studentId,
+          purpose: updatedPayment.purpose,
+          amount: updatedPayment.amount,
+        },
+      }).catch(mailError => {
+        console.error("📧 Background Email Dispatch Error:", mailError);
+      });
+    } else {
+      console.warn(`⚠️ Payment ${tranId} succeeded but linked student data not found.`);
+    }
+  }
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   res.redirect(`${frontendUrl}/payments?status=success&trx=${tranId}`);

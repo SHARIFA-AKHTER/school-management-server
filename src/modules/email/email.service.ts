@@ -3,13 +3,14 @@ import PDFDocument from 'pdfkit';
 import { EmailStatus, EmailType } from '@prisma/client';
 import { ISendEmailInput } from './email.interface.js'; 
 import { prisma } from '../../lib/prisma.js';
+import { env } from '../../config/env.js';
 
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user:env.email_user,
+    pass:env.email_pass
   },
 });
 
