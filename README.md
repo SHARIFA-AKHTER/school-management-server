@@ -37,4 +37,4 @@ git clone [https://github.com/SHARIFA-AKHTER/school-management-server.git]
 cd school-management-server
 
 📡 API Endpoints (Quick Reference)MethodEndpointDescriptionPOST/api/v1/auth/loginUser authenticationPOST/api/v1/students/create-studentRegister a new studentPOST/api/v1/attendances/take-attendanceRecord daily attendanceGET/api/v1/results/:studentIdFetch results for a specific studentGET/api/v1/attendancesList all student attendance records
-Live Demo: [https://school-management-server-lilac.vercel.app/]
+Live Demo: [https://school-management-server-iksg.vercel.app]

@@ -28,7 +28,7 @@ const initiateSSLCommerzPayment = catchAsync(async (req: Request, res: Response)
       .json({ success: false, message: "Student structure not found" });
   }
 
-  let studentEmail = "student@schoolpro.com"; 
+  let studentEmail = "sr0589071@gmail.com"; 
 
   if (student.userId) {
     const userAccount = await prisma.user.findUnique({
@@ -127,7 +127,7 @@ const paymentSuccess = catchAsync(async (req: Request, res: Response) => {
     });
 
     if (studentData) {
-      let recipientEmail = "student@schoolpro.com"; 
+      let recipientEmail = "sr0589071@gmail.com"; 
 
       if (studentData.userId) {
         const userAccount = await prisma.user.findUnique({
