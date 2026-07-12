@@ -34,6 +34,8 @@ const getAllResults = async () => {
   return await prisma.result.findMany({
     include: {
       student: true,
+      subject: true,
+      exam: true,
     },
   });
 };
